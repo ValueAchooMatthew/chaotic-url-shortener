@@ -1,23 +1,12 @@
 "use client";
 
-import { initializeApp } from "firebase/app";
-import { doc, getFirestore, updateDoc } from "firebase/firestore"; 
-import {collection, getDocs} from "firebase/firestore";
+// import { db } from "../api/test/route";
+import { doc, updateDoc } from "firebase/firestore"; 
 import Link from "next/link";
-import { BaseSyntheticEvent, useEffect, useState } from "react"
+import { BaseSyntheticEvent, useState } from "react"
+import { GET } from "../api/test/route";
+import { NextRequest } from "next/server";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDTvp8xuIL6CHzciwAgQL2I7jCWkR_HmwI",
-  authDomain: "chaotic-url-shortener.firebaseapp.com",
-  databaseURL: "https://chaotic-url-shortener-default-rtdb.firebaseio.com",
-  projectId: "chaotic-url-shortener",
-  storageBucket: "chaotic-url-shortener.appspot.com",
-  messagingSenderId: "489084798653",
-  appId: "1:489084798653:web:1ee9361cd24591d84c99d4",
-  measurementId: "G-7K5L05Z6LW"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app)
 
 export default function Home() {
 
@@ -28,7 +17,6 @@ export default function Home() {
       const url = new URL(website);
       return url
     }catch(error){
-      console.log("Please enter a valid URL " + error)
       return null;
     }
   }
@@ -38,18 +26,18 @@ export default function Home() {
     if(event.target instanceof HTMLFormElement){
       if(event.target[0] instanceof HTMLInputElement){
         const submitted_text: string = event.target[0].value;
-        const response = createURL(submitted_text);
-        if(response){
-          const snapshot = doc(db, "websites/shortened sites");
-          console.log(snapshot);
-          const time =`${new Date().getTime()}`;
-          const submit = {
-            [time]: `${response}`
-          }
-          updateDoc(snapshot, submit)
+        const request = createURL(submitted_text);
+        if(request){
+          const response = await GET(new NextRequest(request))
+          console.log(response)
+          
+          // const snapshot = doc(db, "websites/shortened sites");
+          // const submit = {
+          //   [time]: `${response}`
+          // }
           setLinks((prevLinks) => {
             if(prevLinks){
-              return [...prevLinks, {original: submit[time], shortened: time} ];
+              return [...prevLinks, {original: response[time], shortened: time} ];
             }else{
               return [{original: submit[time], shortened: time}];
             }
