@@ -4,7 +4,7 @@
 import { doc, updateDoc } from "firebase/firestore"; 
 import Link from "next/link";
 import { BaseSyntheticEvent, useState } from "react"
-import { GET } from "../api/test/route";
+import { fetchURL } from "../api/test/route";
 import { NextRequest } from "next/server";
 
 
@@ -28,20 +28,20 @@ export default function Home() {
         const submitted_text: string = event.target[0].value;
         const request = createURL(submitted_text);
         if(request){
-          const response = await GET(new NextRequest(request))
+          const response = await fetchURL(new NextRequest(request))
           console.log(response)
           
           // const snapshot = doc(db, "websites/shortened sites");
           // const submit = {
           //   [time]: `${response}`
           // }
-          setLinks((prevLinks) => {
-            if(prevLinks){
-              return [...prevLinks, {original: response[time], shortened: time} ];
-            }else{
-              return [{original: submit[time], shortened: time}];
-            }
-          });
+          // setLinks((prevLinks) => {
+          //   if(prevLinks){
+          //     return [...prevLinks, {original: response[time], shortened: time} ];
+          //   }else{
+          //     return [{original: submit[time], shortened: time}];
+          //   }
+          // });
         }
       }
     }
