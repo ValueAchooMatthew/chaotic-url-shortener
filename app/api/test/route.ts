@@ -19,12 +19,11 @@ const firebaseConfig = {
 const app =  initializeApp(firebaseConfig);
 const db = getFirestore(app);
 export const database = db;
-export async function fetchURL(request: NextRequest) {
-    const time =`${new Date().getTime()}`;
+export function fetchURL(request: NextRequest, shortenedURL: string): [string, string] {
     const submit = {
-        [time]: `${request.url}`
-    }
+        [shortenedURL]: `${request.url}`
+    };
     const snapshot = doc(db, "websites/shortenedURLs");
-    updateDoc(snapshot, submit)
-    return {submit}
+    updateDoc(snapshot, submit);
+    return [ request.url, shortenedURL];
 }

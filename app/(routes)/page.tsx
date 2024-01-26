@@ -1,16 +1,32 @@
 "use client";
 
-// import { db } from "../api/test/route";
-import { doc, updateDoc } from "firebase/firestore"; 
-import Link from "next/link";
 import { BaseSyntheticEvent, useState } from "react"
 import { fetchURL } from "../api/test/route";
 import { NextRequest } from "next/server";
-
+import Link from "next/link";
 
 export default function Home() {
 
-  const [links, setLinks] = useState<{original: string, shortened: string}[]>()
+  const [link, setLink] = useState<URL>()
+  const [word, setword] = useState<string>();
+  const [wordDisplay, setwordDisplay] = useState<boolean>(false);
+  const [QTE, setQTE] = useState<boolean>(false);
+  const [buttonDisplay, setButtonDisplay] = useState<boolean>(false);
+  const [startQTETime, setQTETime] = useState<number>(0);
+  const [offset, setOffset] = useState<[number, number]>();
+  const [response, setResponse] = useState<[string, string]>();
+
+  const randomTimer = (): void =>{
+    const randomTime = Math.random()*3000 + 500;
+    const xO = Math.random()*96;
+    const yO = Math.random()*20;
+    setTimeout(()=>{
+      setQTETime(new Date().getUTCMilliseconds());
+      setButtonDisplay(true);
+      setOffset([xO, yO]);
+    }, randomTime)
+
+  }
 
   const createURL = (website: string): URL | null => {
     try{
@@ -21,27 +37,41 @@ export default function Home() {
     }
   }
 
-  const handleSubmit = async (event: BaseSyntheticEvent)=>{
+  const scrambleString = (word: string): string => {
+    function sorter(a: string, b: string): number{
+      const randNum = Math.floor(Math.random()*10)
+      if(randNum <= 4){
+        return 1;
+      }else{
+        return -1;
+      }
+    }
+    return word.split("").sort(sorter).join("");
+  }
+
+  const handlewordSubmit = (event: BaseSyntheticEvent)=>{
+    event.preventDefault();
+    if(event.target instanceof HTMLFormElement){
+      if(event.target[0] instanceof HTMLInputElement){
+        const word = event.target[0].value;
+        // console.log(word);
+        const scrambledword = scrambleString(word);
+        setword(scrambledword);
+        setQTE(true);
+        randomTimer();
+        
+      }
+    }
+  }
+  const handleSiteSubmit = async (event: BaseSyntheticEvent)=>{
     event.preventDefault();
     if(event.target instanceof HTMLFormElement){
       if(event.target[0] instanceof HTMLInputElement){
         const submitted_text: string = event.target[0].value;
-        const request = createURL(submitted_text);
-        if(request){
-          const response = await fetchURL(new NextRequest(request))
-          console.log(response)
-          
-          // const snapshot = doc(db, "websites/shortened sites");
-          // const submit = {
-          //   [time]: `${response}`
-          // }
-          // setLinks((prevLinks) => {
-          //   if(prevLinks){
-          //     return [...prevLinks, {original: response[time], shortened: time} ];
-          //   }else{
-          //     return [{original: submit[time], shortened: time}];
-          //   }
-          // });
+        const url = createURL(submitted_text);
+        if(url){
+          setLink(url);
+          setwordDisplay(true);
         }
       }
     }
@@ -52,30 +82,91 @@ export default function Home() {
         Chaotic Url Generator
       </h1>
       <div className="w-[48rem] h-16 mx-auto mt-24">
-        <form onSubmit={handleSubmit} className="w-full h-full">
+        <form onSubmit={handleSiteSubmit} className="w-full h-full">
           <input className="w-full h-full rounded-lg text-3xl px-3" type="text" />
         </form>
       </div>
-      <div className="text-center mt-12">
-        {links?
-          <div className="">
-            {
-            links.map((link, index)=>{
-              return(
-                <div className="flex text-3xl justify-center" key={index}>
-                  <Link className="inline-block" href={link.original}>
-                    {link.original}:    
-                  </Link>
-                  <Link className="inline-block font-semibold" href={link.original}>
-                    {link.shortened}
-                  </Link>
-                </div>
-              )})
-            }
+      {wordDisplay?
+        <>
+          <h2 className="text-3xl text-center mt-6">
+            Okay, now type any word
+          </h2>
+          <div className="w-[48rem] h-16 mx-auto mt-10">
+            <form onSubmit={handlewordSubmit} className="w-full h-full">
+              <input className="w-full h-full rounded-lg text-3xl px-3" type="text" />
+            </form>
           </div>
-          :
-          null
-        }
+          {
+        QTE?
+        <>
+          <h2 className="text-3xl text-center mt-6">
+            Good, last step! Click the button...
+          </h2>
+          {
+            (buttonDisplay && offset)?
+            <>
+              <h3 className="text-2xl text-center mt-2">
+              Now!
+              </h3>
+              <div className="mt-8 ">
+                <button
+                onClick={()=>{
+                  if(word && link){
+                    const currentTime = new Date().getUTCMilliseconds();
+                    const timeDiff = (currentTime - startQTETime).toString();
+                    console.log("stringed: "+link.toString());
+                    const shortenedURL =  scrambleString(
+                      link.toString().charAt(Math.random()*link.toString().length) + timeDiff + word + link.toString().charAt(Math.random()*link.toString().length)
+                    )
+                    setResponse(fetchURL(new NextRequest(link), shortenedURL));
+                    setwordDisplay(false)
+                  }
+
+                }}
+                style={{
+                  marginLeft: `${offset[0]}rem`,
+                  marginTop: `${offset[1]}rem`
+
+                }} 
+                className={"px-2 py-1.5 text-lg font-semibold text-gray-950 rounded-lg bg-red-300 "}>
+                  Click here! :P
+                </button>
+              </div>
+
+            </>
+
+            :
+            null
+          }
+        </>
+
+        :
+        null
+      }
+        </>
+      :
+      null
+      }
+      {
+        response?
+        <div className=" flex flex-col justify-center align-middle mt-8">
+          <h1 className="text-3xl text-center">
+            Congrats, your new shortened URL is: 
+          </h1>
+          <div className="flex justify-center mt-6 text-xl">
+            <Link className="text-blue-800 underline" href={response[0]}>
+              {response[0] +":"}
+            </Link>
+            <Link className="mx-2 text-green-800 underline" href={"http://"+window.location.host+"/"+response[1]}>
+              {window.location.host+"/"+response[1]}
+            </Link>
+          </div>
+        </div>
+        :
+        null
+
+      }
+      <div className="text-center mt-12">
       </div>
 
     </main>
