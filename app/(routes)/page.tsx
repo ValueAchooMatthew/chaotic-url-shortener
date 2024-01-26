@@ -1,11 +1,13 @@
 "use client";
 
 import { BaseSyntheticEvent, useState } from "react"
-import { fetchURL } from "../api/test/route";
+import { POST } from "../api/test/route";
 import { NextRequest } from "next/server";
 import Link from "next/link";
 
 export default function Home() {
+
+  const forbiddenChars = [";", "/", "~", "*", "[", "]"]
 
   const [link, setLink] = useState<URL>()
   const [word, setword] = useState<string>();
@@ -15,11 +17,12 @@ export default function Home() {
   const [startQTETime, setQTETime] = useState<number>(0);
   const [offset, setOffset] = useState<[number, number]>();
   const [response, setResponse] = useState<[string, string]>();
+  const [notification, setNotification] = useState<string>();
 
   const randomTimer = (): void =>{
     const randomTime = Math.random()*3000 + 500;
-    const xO = Math.random()*96;
-    const yO = Math.random()*20;
+    const xO = Math.floor(Math.random()*100);
+    const yO = Math.floor(Math.random()*100);
     setTimeout(()=>{
       setQTETime(new Date().getUTCMilliseconds());
       setButtonDisplay(true);
@@ -49,11 +52,16 @@ export default function Home() {
     return word.split("").sort(sorter).join("");
   }
 
-  const handlewordSubmit = (event: BaseSyntheticEvent)=>{
+  const handleWordSubmit = (event: BaseSyntheticEvent)=>{
     event.preventDefault();
     if(event.target instanceof HTMLFormElement){
       if(event.target[0] instanceof HTMLInputElement){
         const word = event.target[0].value;
+        if(forbiddenChars.some((char)=>word.includes(char))){
+          setNotification("Invalid word, please type a word without any of the following characters: ; / ~ * [ ]");
+          setTimeout(()=>{setNotification(undefined)}, 3000);
+          return;
+        }
         // console.log(word);
         const scrambledword = scrambleString(word);
         setword(scrambledword);
@@ -70,14 +78,22 @@ export default function Home() {
         const submitted_text: string = event.target[0].value;
         const url = createURL(submitted_text);
         if(url){
+          setButtonDisplay(false);
           setLink(url);
           setwordDisplay(true);
+          setQTE(false);
+          setResponse(undefined);
+        }else{
+          setNotification("Invalid URL, please provide a complete URL starting with http or https");
+          setTimeout(()=>{
+            setNotification(undefined);
+          }, 3000)
         }
       }
     }
   }
   return (
-    <main className="p-14 ">
+    <main className="p-14">
       <h1 className="text-center text-4xl font-semibold">
         Chaotic Url Generator
       </h1>
@@ -86,13 +102,22 @@ export default function Home() {
           <input className="w-full h-full rounded-lg text-3xl px-3" type="text" />
         </form>
       </div>
+      <div>
+        {notification?
+          <div className="text-center text-red-600 mt-2">
+            {notification}
+          </div>
+          :
+          null
+        }
+      </div>
       {wordDisplay?
         <>
           <h2 className="text-3xl text-center mt-6">
             Okay, now type any word
           </h2>
           <div className="w-[48rem] h-16 mx-auto mt-10">
-            <form onSubmit={handlewordSubmit} className="w-full h-full">
+            <form onSubmit={handleWordSubmit} className="w-full h-full">
               <input className="w-full h-full rounded-lg text-3xl px-3" type="text" />
             </form>
           </div>
@@ -108,24 +133,26 @@ export default function Home() {
               <h3 className="text-2xl text-center mt-2">
               Now!
               </h3>
-              <div className="mt-8 ">
+              <div className="mt-8 w-full h-96">
                 <button
                 onClick={()=>{
                   if(word && link){
                     const currentTime = new Date().getUTCMilliseconds();
                     const timeDiff = (currentTime - startQTETime).toString();
-                    console.log("stringed: "+link.toString());
+                    const randomCharOne = link.toString().charAt(Math.random()*link.toString().length);
+                    const randomCharTwo = link.toString().charAt(Math.random()*link.toString().length);
                     const shortenedURL =  scrambleString(
-                      link.toString().charAt(Math.random()*link.toString().length) + timeDiff + word + link.toString().charAt(Math.random()*link.toString().length)
+                      (forbiddenChars.includes(randomCharOne)? "":randomCharOne) + timeDiff + word + (forbiddenChars.includes(randomCharTwo)? "":randomCharTwo) 
                     )
-                    setResponse(fetchURL(new NextRequest(link), shortenedURL));
+                    POST(new NextRequest(link), shortenedURL);
+                    setResponse([link.toString(), shortenedURL]);
                     setwordDisplay(false)
                   }
 
                 }}
                 style={{
-                  marginLeft: `${offset[0]}rem`,
-                  marginTop: `${offset[1]}rem`
+                  marginLeft: `${offset[0]}%`,
+                  marginTop: `${offset[1]}&`
 
                 }} 
                 className={"px-2 py-1.5 text-lg font-semibold text-gray-950 rounded-lg bg-red-300 "}>
@@ -157,7 +184,7 @@ export default function Home() {
             <Link className="text-blue-800 underline" href={response[0]}>
               {response[0] +":"}
             </Link>
-            <Link className="mx-2 text-green-800 underline" href={"http://"+window.location.host+"/"+response[1]}>
+            <Link className="mx-2 text-green-800 underline" href={window.location.protocol+"//"+window.location.host +"/"+response[1]}>
               {window.location.host+"/"+response[1]}
             </Link>
           </div>
@@ -166,7 +193,8 @@ export default function Home() {
         null
 
       }
-      <div className="text-center mt-12">
+      <div className="text-center mt-12 ">
+        View your saved URLs <Link className="text-blue-800 underline" href="/saved-urls">here</Link>
       </div>
 
     </main>

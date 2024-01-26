@@ -1,15 +1,16 @@
 "use client";
 import { useEffect } from 'react';
 import { getDoc, doc } from "firebase/firestore"; 
-import { database } from '../../api/test/route';
+import { db } from '@/app/_utils/firebaseConfig';
 
 export default function ShortUrlPage({params}: { params: {shorturl: string}}) {
   const url = params.shorturl;
+    
 
   useEffect(() => {
     if (url) {
       const fetchUrl = async () => {
-        const websiteDoc = doc(database, "websites/shortenedURLs");
+        const websiteDoc = doc(db, "websites/shortenedURLs");
         const websiteData = await getDoc(websiteDoc);
         const sites = websiteData.data();
         if (websiteData.exists() && sites && sites[url]) {
@@ -23,5 +24,8 @@ export default function ShortUrlPage({params}: { params: {shorturl: string}}) {
     }
   }, [url]);
 
-  return null; // This page does not need to render anything because it just redirects the user
+  return (
+    null
+
+  ); // This page does not need to render anything because it just redirects the user
 }
