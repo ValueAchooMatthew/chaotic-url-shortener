@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default function Home() {
 
-  const forbiddenChars = [";", "/", "~", "*", "[", "]"]
+  const forbiddenChars = [";", "/", "~", "*", "[", "]", ",", ".", "@", "'", "%", "&"]
 
   const [link, setLink] = useState<URL>()
   const [word, setword] = useState<string>();
@@ -148,7 +148,6 @@ export default function Home() {
                     setResponse([link.toString(), shortenedURL]);
                     setwordDisplay(false)
                   }
-
                 }}
                 style={{
                   marginLeft: `${offset[0]}%`,
