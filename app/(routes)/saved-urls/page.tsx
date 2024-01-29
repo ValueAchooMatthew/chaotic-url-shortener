@@ -24,7 +24,7 @@ export default function Page(){
     return (
     
     <>
-        <div className="h-screen w-full">
+        <div className="min-h-screen h-fit w-full">
             <h1 className="text-5xl text-center mt-12 font-semibold">
                 Your Shortened Sites    
             </h1>
