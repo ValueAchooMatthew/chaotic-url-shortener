@@ -4,6 +4,7 @@ import { BaseSyntheticEvent, useState } from "react"
 import { POST } from "../api/test/route";
 import { NextRequest } from "next/server";
 import Link from "next/link";
+import About from "../_components/about";
 
 export default function Home() {
 
@@ -93,7 +94,8 @@ export default function Home() {
     }
   }
   return (
-    <main className="p-14">
+    <>
+      <main className="p-14 h-screen w-full">
       <h1 className="text-center text-4xl font-semibold">
         Chaotic Url Generator
       </h1>
@@ -180,10 +182,10 @@ export default function Home() {
             Congrats, your new shortened URL is: 
           </h1>
           <div className="flex justify-center mt-6 text-xl">
-            <Link className="text-blue-800 underline" href={response[0]}>
+            <Link className="text-blue-800 underline" target="_" href={response[0]}>
               {response[0] +":"}
             </Link>
-            <Link className="mx-2 text-green-800 underline" href={window.location.protocol+"//"+window.location.host +"/"+response[1]}>
+            <Link className="mx-2 text-green-800 underline" target="_" href={window.location.protocol+"//"+window.location.host +"/"+response[1]}>
               {window.location.host+"/"+response[1]}
             </Link>
           </div>
@@ -197,5 +199,9 @@ export default function Home() {
       </div>
 
     </main>
+    <About></About>
+    
+    </>
+
   )
 }
